@@ -72,10 +72,12 @@ impl Parser {
 
 
     pub fn parse_statement(&mut self) -> Option<Statement> {
-        match self.current_token.typo {
+        let stmt = match self.current_token.typo {
             TokenType::Let => self.parse_let_statement(),
             _ => None,
-        }
+        };
+
+        stmt
     }
     pub fn parse_program(&mut self) -> Program {
         let mut program = Program { statements: vec![] };
@@ -98,20 +100,60 @@ mod tests {
     use super::*;
 
     #[test]
-    fn let_statement_test() {
-        let input = r"let x = 5;";
-        let l =  Lexer::new(input.to_string());
+    fn test_let_statements() {
+        let input = r"let x = 5;
+                          let y = 10;
+                          let foobar = 838383;";
+        let l = Lexer::new(input.to_string());
         let mut p = Parser::new(l);
         let program = p.parse_program();
+        
 
-        assert_eq!(program.statements.len(), 1);
+        assert_eq!(
+            program.statements.len(),
+            3,
+            "Program.statements does not contain 3 statements got={}",
+            program.statements.len()
+        );
 
-        struct Expect {
-            value: String
+        struct ExpectedIdentifier<'a> {
+            value: &'a str,
         }
 
-        let test = vec![Expect { value: "x".to_string() }];
+        let tests = vec![
+            ExpectedIdentifier { value: "x" },
+            ExpectedIdentifier { value: "y" },
+            ExpectedIdentifier { value: "foobar" },
+        ];
 
-         
+        for (i, tt) in tests.iter().enumerate() {
+            let stmt = match &program.statements[i] {
+                Statement::LetStatement(x) => x,
+                _ => panic!("Expected letStatement, found {:?}", &program.statements[1]),
+            };
+
+            assert_eq!(
+                stmt.token.literal,
+                String::from("let"),
+                "s.token.literal not 'let'. got={}",
+                stmt.token.literal
+            );
+
+            assert_eq!(
+                stmt.name.as_ref().unwrap().value.to_string(),
+                tt.value,
+                "stmt.Name.Value not'{}'.got={}",
+                tt.value,
+                stmt.name.as_ref().unwrap().value.to_string()
+            );
+
+            assert_eq!(
+                stmt.name.as_ref().unwrap().token.literal.to_string(),
+                tt.value,
+                "s.name not '{}'. got={}",
+                tt.value,
+                stmt.name.as_ref().unwrap().token.literal.to_string(),
+            )
+        }
     }
 }

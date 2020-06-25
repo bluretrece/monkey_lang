@@ -80,19 +80,3 @@ impl NodeTrait for Program {
         }
     }
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn statement_test() {
-        let input = "+";
-        let lexer = Lexer::new(input.to_string());
-        let mut parser = Parser::new(lexer);
-        let program = parser.parse_program();
-
-        assert_eq!(program.statements.len(), 3);
-
-    }
-}
